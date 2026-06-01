@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenith OS — A Minimal Linux Distribution</title>
+  <meta name="description" content="A minimal, secure, and blazingly fast Linux distribution built for developers who demand performance and elegance.">
+  <link rel="icon" type="image/png" href="bootlogo_zenith.png">
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #09090b;
+      --white: #ffffff;
+      --zinc-400: #a1a1aa;
+      --zinc-500: #71717a;
+      --zinc-700: #3f3f46;
+      --zinc-800: #27272a;
+      --zinc-900: #18181b;
+      --emerald: #34d399;
+      --emerald-dark: #10b981;
+      --emerald-10: rgba(52, 211, 153, 0.1);
+      --emerald-400-10: rgba(52, 211, 153, 0.1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: #e4e4e7;
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ── Layout ── */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Wave Background ── */
+    .wave-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 0;
+    }
+
+    .wave-bg svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .wave-bg svg path { fill: none; stroke: white; }
+
+    .wave-bg .fade-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, var(--bg) 0%, transparent 30%, transparent 70%, var(--bg) 100%);
+      opacity: 0.7;
+    }
+
+    @keyframes drift-a {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
+    @keyframes drift-b {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(14px); }
+    }
+    @keyframes drift-c {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      50% { transform: translateY(-12px) translateX(8px); }
+    }
+    @keyframes drift-d {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(16px); }
+    }
+    @keyframes drift-e {
+      0%, 100% { transform: translateY(0) translateX(0); }
+      50% { transform: translateY(10px) translateX(-6px); }
+    }
+
+    .wave-a { animation: drift-a 20s ease-in-out infinite; }
+    .wave-b { animation: drift-b 25s ease-in-out infinite; }
+    .wave-c { animation: drift-c 18s ease-in-out infinite; }
+    .wave-d { animation: drift-d 22s ease-in-out infinite; }
+    .wave-e { animation: drift-e 28s ease-in-out infinite; }
+
+    /* ── Nav ── */
+    header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-dot {
+      width: 0.75rem;
+      height: 0.75rem;
+      border-radius: 50%;
+      background: var(--emerald);
+    }
+
+    .nav-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--zinc-400);
+    }
+
+    .nav-github {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: var(--zinc-500);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    .nav-github:hover { color: var(--emerald); }
+    .nav-github svg { width: 1.25rem; height: 1.25rem; }
+
+    /* ── Main ── */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 1.5rem;
+      position: relative;
+      z-index: 10;
+    }
+
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 42rem;
+    }
+
+    /* ── Fade-up animation ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .delay-0 { animation-delay: 0s; }
+    .delay-1 { animation-delay: 0.15s; }
+    .delay-2 { animation-delay: 0.3s; }
+    .delay-3 { animation-delay: 0.45s; }
+    .delay-4 { animation-delay: 0.6s; }
+    .delay-5 { animation-delay: 0.75s; }
+    .delay-6 { animation-delay: 0.9s; }
+
+    /* ── Logo ── */
+    .logo {
+      width: 7rem;
+      height: 7rem;
+      object-fit: contain;
+      margin-bottom: 2rem;
+    }
+
+    /* ── Typography ── */
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--white);
+      line-height: 1.1;
+    }
+    h1 .underscore { color: var(--emerald); }
+
+    .tagline {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: var(--zinc-500);
+      max-width: 28rem;
+      line-height: 1.7;
+    }
+
+    /* ── CTA Buttons ── */
+    .cta-group {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .btn svg { width: 1rem; height: 1rem; }
+
+    .btn-primary {
+      background: var(--emerald);
+      color: var(--bg);
+    }
+    .btn-primary:hover { background: var(--emerald-dark); }
+
+    .btn-outline {
+      border: 1px solid var(--zinc-800);
+      color: var(--zinc-400);
+    }
+    .btn-outline:hover {
+      border-color: var(--zinc-700);
+      color: var(--white);
+    }
+
+    /* ── Feature Cards ── */
+    .features {
+      margin-top: 6rem;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      max-width: 48rem;
+      width: 100%;
+    }
+
+    .feature-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      border: 1px solid rgba(39, 39, 42, 0.5);
+      background: rgba(24, 24, 27, 0.3);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .feature-icon {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 0.5rem;
+      background: var(--emerald-400-10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .feature-icon-dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background: var(--emerald);
+    }
+
+    .feature-title {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+
+    .feature-desc {
+      font-size: 0.75rem;
+      color: var(--zinc-500);
+      line-height: 1.6;
+    }
+
+    /* ── Footer ── */
+    footer {
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      z-index: 10;
+    }
+
+    .footer-copy {
+      font-size: 0.75rem;
+      color: var(--zinc-700);
+    }
+
+    .footer-tag {
+      font-size: 0.75rem;
+      color: var(--zinc-800);
+    }
+
+    /* ── Responsive ── */
+    @media (min-width: 640px) {
+      header { padding: 1.25rem 3rem; }
+      .logo { width: 9rem; height: 9rem; }
+      h1 { font-size: 3.75rem; }
+      .tagline { font-size: 1.125rem; }
+      .cta-group { flex-direction: row; }
+      .features { gap: 2.5rem; grid-template-columns: repeat(3, 1fr); }
+      footer { padding: 1.5rem 3rem; }
+    }
+
+    @media (min-width: 768px) {
+      header { padding: 1.25rem 3rem; }
+      .logo { width: 9rem; height: 9rem; }
+      h1 { font-size: 4.5rem; }
+      .features { margin-top: 8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <!-- ══════════ Animated Topographic Wave Background ══════════ -->
+    <div class="wave-bg" aria-hidden="true">
+      <svg preserveAspectRatio="none" viewBox="0 0 1440 900">
+        <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+
+          <!-- Ridge 1 — upper plateau -->
+          <path class="wave-a" d="M-100,60 C80,30 200,100 360,55 C520,10 640,90 800,50 C960,10 1080,80 1240,45 C1400,10 1520,70 1650,55" stroke-width="1.8" stroke-opacity="0.07"/>
+          <path class="wave-a" d="M-100,88 C80,58 200,128 360,83 C520,38 640,118 800,78 C960,38 1080,108 1240,73 C1400,38 1520,98 1650,83" stroke-width="1.5" stroke-opacity="0.09"/>
+          <path class="wave-a" d="M-100,116 C80,86 200,156 360,111 C520,66 640,146 800,106 C960,66 1080,136 1240,101 C1400,66 1520,126 1650,111" stroke-width="1.2" stroke-opacity="0.12"/>
+          <path class="wave-a" d="M-100,144 C80,114 200,184 360,139 C520,94 640,174 800,134 C960,94 1080,164 1240,129 C1400,94 1520,154 1650,139" stroke-width="1.0" stroke-opacity="0.14"/>
+
+          <!-- Ridge 2 — upper-mid terrain -->
+          <path class="wave-b" d="M-100,220 C120,180 280,270 460,215 C640,160 780,260 960,210 C1140,160 1280,250 1440,205 C1520,182 1600,230 1650,220" stroke-width="2.0" stroke-opacity="0.06"/>
+          <path class="wave-b" d="M-100,252 C120,212 280,302 460,247 C640,192 780,292 960,242 C1140,192 1280,282 1440,237 C1520,214 1600,262 1650,252" stroke-width="1.6" stroke-opacity="0.08"/>
+          <path class="wave-b" d="M-100,284 C120,244 280,334 460,279 C640,224 780,324 960,274 C1140,224 1280,314 1440,269 C1520,246 1600,294 1650,284" stroke-width="1.4" stroke-opacity="0.10"/>
+          <path class="wave-b" d="M-100,316 C120,276 280,366 460,311 C640,256 780,356 960,306 C1140,256 1280,346 1440,301 C1520,278 1600,326 1650,316" stroke-width="1.2" stroke-opacity="0.12"/>
+          <path class="wave-b" d="M-100,348 C120,308 280,398 460,343 C640,288 780,388 960,338 C1140,288 1280,378 1440,333 C1520,310 1600,358 1650,348" stroke-width="1.0" stroke-opacity="0.14"/>
+
+          <!-- Ridge 3 — mid terrain (most prominent) -->
+          <path class="wave-c" d="M-100,410 C100,350 260,460 440,400 C620,340 780,450 960,395 C1140,340 1300,440 1440,390 C1520,365 1600,420 1650,410" stroke-width="2.2" stroke-opacity="0.08"/>
+          <path class="wave-c" d="M-100,446 C100,386 260,496 440,436 C620,376 780,486 960,431 C1140,376 1300,476 1440,426 C1520,401 1600,456 1650,446" stroke-width="1.8" stroke-opacity="0.11"/>
+          <path class="wave-c" d="M-100,482 C100,422 260,532 440,472 C620,412 780,522 960,467 C1140,412 1300,512 1440,462 C1520,437 1600,492 1650,482" stroke-width="1.5" stroke-opacity="0.14"/>
+          <path class="wave-c" d="M-100,518 C100,458 260,568 440,508 C620,448 780,558 960,503 C1140,448 1300,548 1440,498 C1520,473 1600,528 1650,518" stroke-width="1.2" stroke-opacity="0.17"/>
+          <path class="wave-c" d="M-100,554 C100,494 260,604 440,544 C620,484 780,594 960,539 C1140,484 1300,584 1440,534 C1520,509 1600,564 1650,554" stroke-width="1.0" stroke-opacity="0.15"/>
+          <path class="wave-c" d="M-100,590 C100,530 260,640 440,580 C620,520 780,630 960,575 C1140,520 1300,620 1440,570 C1520,545 1600,600 1650,590" stroke-width="0.8" stroke-opacity="0.12"/>
+
+          <!-- Ridge 4 — lower terrain -->
+          <path class="wave-d" d="M-100,650 C140,600 300,700 480,650 C660,600 820,690 1000,645 C1180,600 1320,685 1500,640 C1580,618 1640,665 1650,650" stroke-width="1.8" stroke-opacity="0.06"/>
+          <path class="wave-d" d="M-100,678 C140,628 300,728 480,678 C660,628 820,718 1000,673 C1180,628 1320,713 1500,668 C1580,646 1640,693 1650,678" stroke-width="1.5" stroke-opacity="0.08"/>
+          <path class="wave-d" d="M-100,706 C140,656 300,756 480,706 C660,656 820,746 1000,701 C1180,656 1320,741 1500,696 C1580,674 1640,721 1650,706" stroke-width="1.2" stroke-opacity="0.10"/>
+          <path class="wave-d" d="M-100,734 C140,684 300,784 480,734 C660,684 820,774 1000,729 C1180,684 1320,769 1500,724 C1580,702 1640,749 1650,734" stroke-width="1.0" stroke-opacity="0.12"/>
+
+          <!-- Ridge 5 — deep valley -->
+          <path class="wave-e" d="M-100,790 C160,755 320,830 500,790 C680,750 840,820 1020,785 C1200,750 1360,815 1520,780 C1600,763 1640,800 1650,790" stroke-width="1.4" stroke-opacity="0.05"/>
+          <path class="wave-e" d="M-100,812 C160,777 320,852 500,812 C680,772 840,842 1020,807 C1200,772 1360,837 1520,802 C1600,785 1640,822 1650,812" stroke-width="1.2" stroke-opacity="0.07"/>
+          <path class="wave-e" d="M-100,834 C160,799 320,874 500,834 C680,794 840,864 1020,829 C1200,794 1360,859 1520,824 C1600,807 1640,844 1650,834" stroke-width="1.0" stroke-opacity="0.09"/>
+
+          <!-- Accent break lines -->
+          <path class="wave-a" d="M-100,170 C200,155 400,185 600,165 C800,145 1000,180 1200,160 C1400,140 1550,170 1650,165" stroke-width="0.6" stroke-opacity="0.06"/>
+          <path class="wave-c" d="M-100,380 C180,355 360,405 540,375 C720,345 900,400 1080,370 C1260,340 1420,385 1650,375" stroke-width="0.6" stroke-opacity="0.07"/>
+          <path class="wave-d" d="M-100,625 C150,610 330,640 510,620 C690,600 870,635 1050,615 C1230,595 1390,625 1650,615" stroke-width="0.6" stroke-opacity="0.05"/>
+          <path class="wave-e" d="M-100,770 C200,758 380,782 560,765 C740,748 920,778 1100,760 C1280,742 1440,770 1650,762" stroke-width="0.6" stroke-opacity="0.04"/>
+
+          <!-- Long-flowing accent waves -->
+          <path class="wave-b" d="M-100,160 C60,110 220,220 400,170 C580,120 720,230 900,180 C1080,130 1220,220 1400,175 C1520,145 1620,195 1650,180" stroke-width="1.6" stroke-opacity="0.04"/>
+          <path class="wave-d" d="M-100,690 C100,640 260,740 440,690 C620,640 760,735 940,685 C1120,635 1280,725 1460,680 C1560,657 1620,705 1650,695" stroke-width="1.6" stroke-opacity="0.04"/>
+        </g>
+      </svg>
+      <div class="fade-overlay"></div>
+    </div>
+
+    <!-- ══════════ Navigation ══════════ -->
+    <header>
+      <div class="nav-brand">
+        <div class="nav-dot"></div>
+        <span class="nav-title">Zenith OS</span>
+      </div>
+      <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="nav-github">
+        <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10Z" clip-rule="evenodd"/>
+        </svg>
+        <span class="hide-mobile">GitHub</span>
+      </a>
+    </header>
+
+    <!-- ══════════ Hero ══════════ -->
+    <main>
+      <div class="hero">
+
+        <!-- Logo -->
+        <img
+          class="logo fade-up delay-0"
+          src="bootlogo_zenith.png"
+          alt="Zenith OS Boot Logo"
+        >
+
+        <!-- Title -->
+        <h1 class="fade-up delay-1">
+          Zenith<span class="underscore">_</span>OS
+        </h1>
+
+        <!-- Tagline -->
+        <p class="tagline fade-up delay-2">
+          A minimal, secure, and blazingly fast Linux distribution built for
+          developers who demand performance and elegance.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="cta-group fade-up delay-3">
+          <a href="https://github.com/Dark4331/Zenith_OS" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+            <svg fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.009-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10Z" clip-rule="evenodd"/>
+            </svg>
+            View on GitHub
+          </a>
+          <a href="https://github.com/Dark4331/Zenith_OS" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+            Download ISO
+          </a>
+        </div>
+
+        <!-- Features -->
+        <section class="features">
+          <div class="feature-card fade-up delay-4">
+            <div class="feature-icon">
+              <div class="feature-icon-dot"></div>
+            </div>
+            <h3 class="feature-title">Lightweight</h3>
+            <p class="feature-desc">Minimal resource footprint designed to run on any hardware.</p>
+          </div>
+          <div class="feature-card fade-up delay-5">
+            <div class="feature-icon">
+              <div class="feature-icon-dot"></div>
+            </div>
+            <h3 class="feature-title">Secure</h3>
+            <p class="feature-desc">Hardened kernel with mandatory access controls out of the box.</p>
+          </div>
+          <div class="feature-card fade-up delay-6">
+            <div class="feature-icon">
+              <div class="feature-icon-dot"></div>
+            </div>
+            <h3 class="feature-title">Open Source</h3>
+            <p class="feature-desc">Fully transparent. Inspect, modify, and contribute freely.</p>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- ══════════ Footer ══════════ -->
+    <footer>
+      <span class="footer-copy">&copy; 2026 Zenith OS Project</span>
+      <span class="footer-tag">Linux inside.</span>
+    </footer>
+
+  </div>
+
+  <style>
+    .hide-mobile { display: none; }
+    @media (min-width: 640px) {
+      .hide-mobile { display: inline; }
+    }
+  </style>
+</body>
+</html>
